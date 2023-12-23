@@ -16,6 +16,9 @@ class Company(Base):
     name = Column(String())
     founding_year = Column(Integer())
 
+    freebies = relationship('Freebie', back_populates='company')
+    devs = relationship('Dev', secondary='dev_freebies')
+
     def __repr__(self):
         return f'<Company {self.name}>'
 
@@ -25,5 +28,39 @@ class Dev(Base):
     id = Column(Integer(), primary_key=True)
     name= Column(String())
 
+    freebies = relationship('Freebie', back_populates='dev')
+    companies = relationship('Company', secondary='dev_freebies')
+    
+    def received_one(self, item_name):
+        
+        return any(freebie.item_name == item_name for freebie in self.freebies)
+
+    def give_away(self, other_dev, freebie):
+        if freebie.dev == self:
+            freebie.dev = other_dev
+            return True
+        return False
+    
     def __repr__(self):
         return f'<Dev {self.name}>'
+    
+class Freebie(Base):
+    __tablename__='freebies'
+
+    id=Column(Integer(),primary_key=True)
+    item_name=Column(String())
+    value=Column(Integer())
+
+    dev_id=Column(Integer(),ForeignKey('dev.id'))
+    company_id=Column(Integer(),ForeignKey('company.id'))
+
+    company = relationship('Company', back_populates='freebies')
+    dev = relationship('Dev', back_populates='freebies')
+
+    def ___repr__(self):
+        return f'<Dev{self.item_name}>'
+    
+class DevFreebie(Base):
+    __tablename__ = 'dev_freebies'
+    dev_id = Column(Integer, ForeignKey('devs.id'), primary_key=True)
+    freebie_id = Column(Integer, ForeignKey('freebies.id'), primary_key=True)
